@@ -1,0 +1,11 @@
+{
+  "name": "fypdemo2017",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "DENG Zhiheng, LI Zhihang, QIU Yuan, ZHANG Yifeng",
+  "license": "ISC"
+}
