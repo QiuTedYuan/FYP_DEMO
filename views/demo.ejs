@@ -1,15 +1,33 @@
 <!DOCTYPE HTML>
-<html>
+<html lang="en">
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
     <title>Wi-Fi Tracking and User Analysis</title>
-    <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="css/main.css">
   </head>
   <body>
-    <h1>Wi-Fi Tracking and User Analysis</h1>
-    <p>Author: DENG,Zhiheng LI,Zhihang QIU,Yuan ZHANG,Yifeng</p>
-    <button id='deviceClass'>Device Classification</button>
-    <button id='pathGeneration'>Path Generation</button>
-    <canvas id="myCanvas" width="200" height="100" />
+    <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse"> </nav>
+    <div class="jumbotron">
+      <div class="container">
+	<h1 class="display-3">Wi-Fi Tracking and User Analysis</h1>
+	<p>Author: DENG Zhiheng, LI Zhihang, QIU Yuan, ZHANG Yifeng</p>
+      </div>
+    </div>
+    <div class="buttons">
+      <div class="container">
+	<a class="btn btn-secondary" id="deviceClass" href="#" role="button">Device Classification »</a>
+	<a class="btn btn-secondary" id="pathGeneration" href="#" role="button">Path Generation »</a>
+      </div>
+    </div>
+    <div class="canvas">
+      <div class="container">
+	<canvas id="myCanvas" width="200" height="100" />
+      </div>
+    </div>
   </body>
 
   <script>
