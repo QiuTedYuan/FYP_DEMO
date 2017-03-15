@@ -6,8 +6,12 @@
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.slim.min.js"></script>
     <title>Wi-Fi Tracking and User Analysis</title>
-    <link rel="stylesheet" href="css/main.css">
+    <style>
+      #myCanvas {background-image:url("/views/hkust_26.jpg");
+      background-repeat: no-repeat;};
+    </style>
   </head>
   <body>
     <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse"> </nav>
@@ -25,23 +29,16 @@
     </div>
     <div class="canvas">
       <div class="container">
-	<canvas id="myCanvas" width="200" height="100" />
+	<canvas id="myCanvas" width="1000" height="500" />
       </div>
     </div>
   </body>
 
-  <script>
-  function drawPoint(x, y, color = "#000000"){
+
+  <script type="text/javascript">
     var c = document.getElementById("myCanvas");
     var ctx = c.getContext("2d");
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.arc(x, y, 5, 0 , 2*Math.PI, true);
-    ctx.fillStyle = color;
-    ctx.fill();
-    //ctx.stroke();
-  }
-
+    var color = '#FF0000';
   function drawLine(x1, y1, x2, y2){
     ctx.beginPath();
     ctx.moveTo(x1,y1);
@@ -49,66 +46,30 @@
     ctx.stroke();
   }
 
-  var defaultData={
-    device1:[
-      {
-        x: 50,
-        y: 50,
-        timestamp: 1000,
-      },
-      {
-        x: 100,
-        y: 50,
-        timestamp: 1050,
-      },
-      {
-        x: 150,
-        y: 50,
-        timestamp: 1100,
-      }
-    ],
-    device2:[
-      {
-        x: 150,
-        y: 90,
-        timestamp: 1000,
-      },
-      {
-        x: 140,
-        y: 60,
-        timestamp: 1050,
-      },
-      {
-        x: 130,
-        y: 10,
-        timestamp: 1100,
-      }
-    ],
-  };
-
-  var c = document.getElementById("myCanvas");
-  var ctx = c.getContext("2d");
-
-
-  Object.keys(defaultData).map(function(deviceKey){
-    var device = defaultData[deviceKey];
-    var previousX = -1;
-    var previousY = -1;
-    device.map(function(point){
-      drawPoint(point.x, point.y);
-      if (previousX > -1 && previousY > -1){
-        drawLine(previousX, previousY, point.x, point.y);
-      }
-      previousX = point.x;
-      previousY = point.y;
-    })
-
-  });
-
-  //ctx.moveTo(0,0);
-  //ctx.lineTo(200,100);
-  //ctx.stroke();
-
+  var defaultData = [<%= defaultData %>]
+  
+  var x=[];
+  var y=[];
+  var minX=10000;
+  var minY=10000;
+ 
+  for (var i = 0; i < defaultData.length / 2 ; ++i) {
+		      x[i]=defaultData[2*i];
+		      y[i]=defaultData[2*i+1];
+		      if (x[i] < minX) minX=x[i];
+		      if (y[i] < minY) minY=y[i];
+		      }
+		      $("#myCanvas").css("background-position","-"+(minX-20)+"px, -"+(minY-20)+"px");
+		      for (var i = 0; i < defaultData.length / 2 ; ++i) {
+					  
+    var xx = (x[i]-minX);
+    var yy = (y[i]-minY);
+    ctx.fillStyle = color;
+    ctx.fillRect(xx+20, yy+20, 2, 2);
+  }
+					  
+					  
 
   </script>
+  <!--script src="js/py.js"></script-->
 </html>

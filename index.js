@@ -1,47 +1,34 @@
 var express = require('express');
 var app = express();
+var path = require('path');
+var externalServer = { router : "eek123.ust.hk" }
+var fs = require("fs");
 
-app.set('views', require('path').join(__dirname, 'views'));
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(express.static('public'));
+app.use(express.static(__dirname));
 app.engine('ejs', require('ejs').renderFile);
 
-var defaultData={
-  device1:[
-    {
-      x: 50,
-      y: 50,
-      timestamp: 1000,
-    },
-    {
-      x: 55,
-      y: 45,
-      timestamp: 1050,
-    },
-    {
-      x: 63,
-      y: 42,
-      timestamp: 1100,
+var size = 3000;
+var dataArr = [];
+
+dataArr = fs.readFileSync(__dirname+'/data/newGTD.txt','utf8').toString().split('\n',size);
+
+var deviceData = []
+//console.log(dataArr);
+for (var i=0; i<dataArr.length; ++i) {
+    var device = dataArr[i].split(' ');
+    device = device.filter(function(s){return s!='';});
+    var json = {
+	'id' : device[1],
+	'x' : device[3],
+	'y' : device[4],
+	'time' : device[5]
     }
-  ],
-  device2:[
-    {
-      x: 100,
-      y: 100,
-      timestamp: 1000,
-    },
-    {
-      x: 105,
-      y: 95,
-      timestamp: 1050,
-    },
-    {
-      x: 103,
-      y: 92,
-      timestamp: 1100,
-    }
-  ],
-};
+    //    deviceData.push(json);
+    deviceData.push([device[3],device[4]]);
+}
+//console.log(deviceData);
 
 
 /*
@@ -53,8 +40,8 @@ var defaultData={
  *}
  */
 app.get('/', function (req, res) {
-  console.log(defaultData);
-  res.render('demo.ejs', {currentTime: new Date()});
+  //console.log(defaultData);
+    res.render('demo.ejs', {currentTime: new Date(), 'defaultData': deviceData});
 });
 
 
