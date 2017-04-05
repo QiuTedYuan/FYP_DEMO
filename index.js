@@ -9,7 +9,7 @@ app.set('view engine', 'ejs');
 app.use(express.static(__dirname));
 app.engine('ejs', require('ejs').renderFile);
 
-var size = 3000;
+var size = 150;
 var dataArr = [];
 
 dataArr = fs.readFileSync(__dirname+'/data/newGTD.txt','utf8').toString().split('\n',size);
@@ -20,15 +20,16 @@ for (var i=0; i<dataArr.length; ++i) {
     var device = dataArr[i].split(' ');
     device = device.filter(function(s){return s!='';});
     var json = {
-	'id' : device[1],
-	'x' : device[3],
-	'y' : device[4],
-	'time' : device[5]
+	"id" : device[1],
+	"x" : device[3],
+	"y" : device[4],
+	"time" : device[5]
     }
-    //    deviceData.push(json);
-    deviceData.push([device[3],device[4]]);
+    deviceData.push(json);
+    //deviceData.push([device[3],device[4]]);
 }
-//console.log(deviceData);
+deviceData=JSON.stringify(deviceData);
+//console.log(JSON.stringify(deviceData));
 
 
 /*

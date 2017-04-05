@@ -10,7 +10,9 @@
     <title>Wi-Fi Tracking and User Analysis</title>
     <style>
       #myCanvas {background-image:url("/views/hkust_26.jpg");
-      background-repeat: no-repeat;};
+.svg {background-image:url("/views/hkust_26.jpg");
+background-repeat: no-repeat;};
+      .center {margin:auto;};
     </style>
   </head>
   <body>
@@ -21,55 +23,107 @@
 	<p>Author: DENG Zhiheng, LI Zhihang, QIU Yuan, ZHANG Yifeng</p>
       </div>
     </div>
-    <div class="buttons">
+   <div class="buttons">
       <div class="container">
-	<a class="btn btn-secondary" id="deviceClass" href="#" role="button">Device Classification »</a>
-	<a class="btn btn-secondary" id="pathGeneration" href="#" role="button">Path Generation »</a>
+	<div class="row">
+	  <div class="col-md-4 text-center">
+	    <a class="btn btn-secondary" id="deviceClass" role="button">Device Classification »</a>
+	  </div>
+	  <div class="col-md-4 text-center">
+	    <a class="btn btn-secondary" id="pathGeneration"  role="button">Path Generation »</a>
+	  </div>
+	</div>
       </div>
     </div>
-    <div class="canvas">
-      <div class="container">
-	<canvas id="myCanvas" width="1000" height="500" />
-      </div>
-    </div>
+    <br>
+
+    <div class="container" id="myCanvas" display="block" width="100%" height="600px" overflow="scroll">
+
+<svg height="600" width="100%">
+
+</svg>    </div>
   </body>
 
 
   <script type="text/javascript">
-    var c = document.getElementById("myCanvas");
-    var ctx = c.getContext("2d");
-    var color = '#FF0000';
-  function drawLine(x1, y1, x2, y2){
-    ctx.beginPath();
-    ctx.moveTo(x1,y1);
-    ctx.lineTo(x2,y2);
-    ctx.stroke();
-  }
+    var defaultData = <%- defaultData %>
+    //    console.log(defaultData);
 
-  var defaultData = [<%= defaultData %>]
-  
-  var x=[];
-  var y=[];
-  var minX=10000;
-  var minY=10000;
- 
-  for (var i = 0; i < defaultData.length / 2 ; ++i) {
-		      x[i]=defaultData[2*i];
-		      y[i]=defaultData[2*i+1];
-		      if (x[i] < minX) minX=x[i];
-		      if (y[i] < minY) minY=y[i];
-		      }
-		      $("#myCanvas").css("background-position","-"+(minX-20)+"px, -"+(minY-20)+"px");
-		      for (var i = 0; i < defaultData.length / 2 ; ++i) {
-					  
-    var xx = (x[i]-minX);
-    var yy = (y[i]-minY);
-    ctx.fillStyle = color;
-    ctx.fillRect(xx+20, yy+20, 2, 2);
-  }
-					  
-					  
+    var x=[];
+    var y=[];
+    var minX=10000;
+    var minY=10000;
+    var count=[];
+    var maxcount = 0;
+    console.log(defaultData[0]);
+    for (var i = 0; i < defaultData.length ; ++i) {
+        x[i]=defaultData[i].x;
+        y[i]=defaultData[i].y;
+        if (x[i] < minX) minX=x[i];
+        if (y[i] < minY) minY=y[i];
+        if (typeof count[([x[i],y[i]])] === 'undefined') {
+            count[([x[i],y[i]])]=0;
+        } else {
+            count[([x[i],y[i]])]++;
+            if (maxcount < count[([x[i],y[i]])])
+                maxcount = count[([x[i],y[i]])];
+        }
+    }
+    var drawn=[];
+    $("#myCanvas").css("background-position","-"+(minX-20)+"px, -"+(minY-20)+"px");
 
+    var maxcolor = 0x702F00;
+    var mincolor = 0x702FFF;
+
+    var svghtml = $("svg").html();
+
+    for (var i = 0; i < defaultData.length ; ++i) {
+
+	if (typeof drawn[([x[i],y[i]])] === 'undefined') {
+        var xx = (x[i]-minX);
+		var yy = (y[i]-minY);
+		var fraction = count[([x[i],y[i]])]*1./maxcount;
+		color  = Math.round(mincolor+fraction*(maxcolor-mincolor));
+			
+		var centerX = xx+20;
+		var centerY = yy+20;
+		var radius = Math.round(1+fraction*9);
+svghtml += "<circle cx=\""+centerX+"\" cy=\""+centerY+"\" r=\""+radius+"\" stroke=\"black\" stroke-width=\"1\" fill=\"#"+color.toString(16)+"\" />";
+
+}}
+$("svg").html(svghtml);
+$("#deviceClass").on("click",function() {
+defaultData.sort(function(a,b) {
+    if (a.id>b.id) return 1;
+    else if (a.id<b.id) return -1;
+    else if (a.time>b.time) return 1;
+    else if (a.time<b.time) return -1;
+    else return 0;
+});
+var currid = defaultData[0].id;
+var trajectory = [[defaultData[0].x-minX+20,defaultData[0].y-minY+20]];
+for (var i=0; i<defaultData.length; ++i) {
+    var newid = defaultData[i].id;
+    if (newid==currid) {
+            trajectory.push([defaultData[i].x-minX+20, defaultData[i].y-minY+20]);
+        } else {
+            currid  = newid;
+            var num_traj = trajectory.length-1;
+            if (num_traj > 0) {
+            for (var j=1; j<trajectory.length; ++j){
+                svghtml += "<line x1=\""+trajectory[j-1][0]+"\" \
+                                  x2=\""+trajectory[j][0]+"\" \
+                                  y1=\""+trajectory[j-1][1]+"\" \
+                                  y2=\""+trajectory[j][1]+"\" \
+                                  stroke=\"rgb("+Math.floor(Math.random()*256)+","+Math.floor(Math.random()*256)+","+Math.floor(Math.random()*256)+")\" \
+                                stroke-width=2 />";
+                trajectory = [[defaultData[i].x-minX+20, defaultData[i].y-minY+20]];
+            }
+        }
+    }
+}
+$("svg").html(svghtml);
+});
   </script>
   <!--script src="js/py.js"></script-->
 </html>
