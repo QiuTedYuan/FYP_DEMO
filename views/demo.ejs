@@ -9,10 +9,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.slim.min.js"></script>
     <title>Wi-Fi Tracking and User Analysis</title>
     <style>
-      #myCanvas {background-image:url("/views/hkust_26.jpg");
-.svg {background-image:url("/views/hkust_26.jpg");
-background-repeat: no-repeat;};
-      .center {margin:auto;};
+      #myCanvas {
+      background-repeat: no-repeat;
+      background-image:url("/views/hkust_26.jpg");
+      height: 800px
+      }
+      table, th, td {
+      text-align:center;
+      }
+      th, td {
+      width: 24%;
+      }
     </style>
   </head>
   <body>
@@ -27,42 +34,74 @@ background-repeat: no-repeat;};
       <div class="container">
 	<div class="row">
 	  <div class="col-md-4 text-center">
-	    <a class="btn btn-secondary" id="deviceClass" role="button">Device Classification »</a>
+	    <button type="button" class="btn btn-primary" id="deviceClass">Device Classification »</button>
 	  </div>
 	  <div class="col-md-4 text-center">
-	    <a class="btn btn-secondary" id="pathGeneration"  role="button">Path Generation »</a>
+	    <button type="button" class="btn btn-success disabled" id="pathGeneration">Path Generation »</button>
+	  </div>
+	  <div class="col-md-4 text-center">
+	    <button class="btn btn-warning" id="clear">Clear</button>
 	  </div>
 	</div>
       </div>
     </div>
     <br>
 
-    <div class="container" id="myCanvas" display="block" width="100%" height="600px" overflow="scroll">
+    <div class="col-md-12" style="height:500px;">
+      <div class="container" id="myCanvas" display="block" style="height:500px" overflow="scroll">
+	<svg height="500" width="100%">
+	</svg>
+      </div>
+    </div>
+    <p></p>
 
-<svg height="600" width="100%">
-
-</svg>    </div>
+    <div class="container">
+      <div class="row">
+	<div class="col-md-12">
+	  <table class="table table-striped">
+	  <thead>
+	      <tr>
+		<th>#</th>
+		<th>Mac address</th>
+		<th>color</th>
+		<th>number of points</th>
+	      </tr>
+	  </thead>
+	  <tbody class="deviceList">
+	  </tbody>
+	</table>
+	</div>
+      </div>
+    </div>
+    <div id="spaceFiller" style="height:1000px;"></div>
   </body>
 
 
   <script type="text/javascript">
     var defaultData = <%- defaultData %>
-    //    console.log(defaultData);
+
 
     var x=[];
     var y=[];
     var minX=10000;
     var minY=10000;
+    var maxX=-1;
+    var maxY=-1;
     var count=[];
     var maxcount = 0;
     console.log(defaultData[0]);
     for (var i = 0; i < defaultData.length ; ++i) {
-        x[i]=defaultData[i].x;
+			x[i]=defaultData[i].x;
         y[i]=defaultData[i].y;
-        if (x[i] < minX) minX=x[i];
+	if (x[i] < minX) minX=x[i];
+	if (x[i] > maxX) maxX=x[i];
+	if (y[i] > maxY) maxY=y[i];		
         if (y[i] < minY) minY=y[i];
-        if (typeof count[([x[i],y[i]])] === 'undefined') {
-            count[([x[i],y[i]])]=0;
+		   if (typeof count[([x[i],y[i]])] === 'undefined') {
+		   count[([x[i],y[i]])]=1;
+		               if (maxcount < count[([x[i],y[i]])])
+					      maxcount = count[([x[i],y[i]])];
+
         } else {
             count[([x[i],y[i]])]++;
             if (maxcount < count[([x[i],y[i]])])
@@ -70,7 +109,12 @@ background-repeat: no-repeat;};
         }
     }
     var drawn=[];
-    $("#myCanvas").css("background-position","-"+(minX-20)+"px, -"+(minY-20)+"px");
+    var rightshift = Math.round(($("svg").width()-(maxX-minX))/2);
+    if (rightshift<0) rightshift = 20;
+    var upshift = Math.round(($("svg").height()-(maxY-minY))/2);
+    if (upshift<0) upshift = 20;
+
+    $("#myCanvas").css("background-position","-"+(Math.round(minX)-rightshift)+"px -"+(Math.round(minY)-upshift)+"px");
 
     var maxcolor = 0x702F00;
     var mincolor = 0x702FFF;
@@ -85,45 +129,171 @@ background-repeat: no-repeat;};
 		var fraction = count[([x[i],y[i]])]*1./maxcount;
 		color  = Math.round(mincolor+fraction*(maxcolor-mincolor));
 			
-		var centerX = xx+20;
-		var centerY = yy+20;
+		var centerX = xx+rightshift;
+		var centerY = yy+upshift;
 		var radius = Math.round(1+fraction*9);
-svghtml += "<circle cx=\""+centerX+"\" cy=\""+centerY+"\" r=\""+radius+"\" stroke=\"black\" stroke-width=\"1\" fill=\"#"+color.toString(16)+"\" />";
-
-}}
-$("svg").html(svghtml);
-$("#deviceClass").on("click",function() {
-defaultData.sort(function(a,b) {
-    if (a.id>b.id) return 1;
-    else if (a.id<b.id) return -1;
-    else if (a.time>b.time) return 1;
-    else if (a.time<b.time) return -1;
-    else return 0;
-});
-var currid = defaultData[0].id;
-var trajectory = [[defaultData[0].x-minX+20,defaultData[0].y-minY+20]];
-for (var i=0; i<defaultData.length; ++i) {
-    var newid = defaultData[i].id;
-    if (newid==currid) {
-            trajectory.push([defaultData[i].x-minX+20, defaultData[i].y-minY+20]);
-        } else {
-            currid  = newid;
-            var num_traj = trajectory.length-1;
-            if (num_traj > 0) {
-            for (var j=1; j<trajectory.length; ++j){
-                svghtml += "<line x1=\""+trajectory[j-1][0]+"\" \
-                                  x2=\""+trajectory[j][0]+"\" \
-                                  y1=\""+trajectory[j-1][1]+"\" \
-                                  y2=\""+trajectory[j][1]+"\" \
-                                  stroke=\"rgb("+Math.floor(Math.random()*256)+","+Math.floor(Math.random()*256)+","+Math.floor(Math.random()*256)+")\" \
-                                stroke-width=2 />";
-                trajectory = [[defaultData[i].x-minX+20, defaultData[i].y-minY+20]];
-            }
-        }
+		svghtml += "<circle cx=\""+centerX+"\" cy=\""+centerY+"\" r=\""+radius+"\" stroke=\"black\" stroke-width=\"1\" fill=\"#"+color.toString(16)+"\" />";
+	}
     }
-}
-$("svg").html(svghtml);
-});
+    $("svg").html(svghtml);
+			
+    var pointsvg = svghtml;
+    $("#clear").on("click", function() {
+	$("svg").html(pointsvg);
+    });
+
+
+    var devicep = 0;
+    var devicesvg;
+    var devices = [];
+    var colors = [];
+    var deviceListhtml=$(".deviceList").html();
+    $("#deviceClass").on("click",function() {
+
+			
+        if (devicep==0) {
+            defaultData.sort(function(a,b) {
+		if (a.id>b.id) return 1;
+		else if (a.id<b.id) return -1;
+		else if (a.time>b.time) return 1;
+		else if (a.time<b.time) return -1;
+		else return 0;
+	    });
+	    var currid = defaultData[0].id;
+	    var getRandomColor = function() {
+		var letters = "0123456789ABCDEF";
+		var color = "#";
+		for (var i = 0; i < 6; i++ ) {
+		    color += letters[Math.floor(Math.random() * 16)];
+		}
+                return color;
+	    }
+	    var printTrajectory = function(trajectory, id, color) {
+		var svgret="";
+                                         
+		for (var j=1; j<trajectory.length; ++j){
+			svgret += "<line class=\""+id+"\" x1=\""+trajectory[j-1][0]+"\" \
+					 x2=\""+trajectory[j][0]+"\" \
+					 y1=\""+trajectory[j-1][1]+"\" \
+                                         y2=\""+trajectory[j][1]+"\" \
+                                         stroke=\""+color+"\"stroke-width=2 />";
+            	 }
+		return svgret;
+	    }
+
+	    var displayMac = function(id) {
+		var idm = id;
+	        while (idm.length<12) {
+			idm='0'+idm;
+		}
+	        var result = "";
+		for (var i=0; i< idm.length; ++i){
+		    result+=idm[i].toUpperCase();
+		    if (i%2 && i!= idm.length-1) result+=':';
+		}
+		return result;
+	    }
+
+            var trajectory = [[defaultData[0].x-minX+rightshift,defaultData[0].y-minY+upshift]];
+            for (var i=0; i< defaultData.length; ++i) {
+		var newid = defaultData[i].id;
+		if (newid==currid) {
+                    trajectory.push([defaultData[i].x-minX+rightshift, defaultData[i].y-minY+upshift]);
+                } else {
+		    devices.push(trajectory);
+		    var color = getRandomColor();
+		    colors.push(color);
+		    deviceListhtml+="<tr class=\"t"+devices.length+" t"+color+"\"><td>"+devices.length+"</td><td>"+displayMac(currid)+"</td><td><div style=\"background-color:"+color+";\">"+color+"</div></td><td>"+trajectory.length+"</td></tr>";
+                    var num_traj = trajectory.length-1;
+			if (num_traj > 0) {
+				svghtml += printTrajectory(trajectory,devices.length,color);
+			} 
+	            trajectory = [[defaultData[i].x-minX+rightshift, defaultData[i].y-minY+upshift]];
+		    currid = newid;
+                }
+            }
+	    devices.push(trajectory);
+	    var color = getRandomColor();
+            colors.push(color);
+	    deviceListhtml+="<tr class=\"t"+devices.length+" t"+color+"\"><td>"+devices.length+"</td><td>"+displayMac(currid)+"</td><td><div style=\"background-color:"+color+";\">"+color+"</div></td><td>"+trajectory.length+"</td></tr>";
+            var num_traj = trajectory.length-1;
+		if (num_traj > 0) {
+		    svghtml += printTrajectory(trajectory,devices.length,color);
+		} 
+	    devicesvg=svghtml;
+	    devicep=1;			
+	}
+	$("svg").html(devicesvg);
+        $(".deviceList").html(deviceListhtml);
+
+	$("#pathGeneration").removeClass("disabled");							  
+					
+	$("line").hover(function() {
+	    $("line").hide();
+	    $("."+$(this).attr("class")).show();
+	    $("tbody > tr").hide();
+	    $(".t"+$(this).attr("class")).show();
+        }, function() {
+	    $("line").show();
+	    $("tr").show();
+	});
+
+
+
+    });
+
+    smoothTraj = function(trajectory, color, firstrun) {
+
+	if (firstrun) {
+	   if (trajectory.length <= 1) return "";
+           var svgret;
+	   if (trajectory.length == 2) {
+	       svgret="L "+trajectory[1][0]+" "+trajectory[1][1]+" ";
+	   } else if (trajectory.length == 3) {
+	       svgret="Q "+trajectory[1][0]+" "+trajectory[1][1]+", "+trajectory[2][0]+" "+trajectory[2][1]+" ";
+	   } else if (trajectory.length >= 4) {
+	       svgret="C "+trajectory[1][0]+" "+trajectory[1][1]+", "+trajectory[2][0]+" "+trajectory[2][1]+", "+trajectory[3][0]+" "+trajectory[3][1]+" ";
+	       svgret+=smoothTraj(trajectory.slice(4),"",0);
+	   }
+	} else {
+	   if (trajectory.length < 1) return "";
+           else if (trajectory.length == 1) return "T "+trajectory[0][0]+" "+trajectory[0][1]+" ";
+	   else if (trajectory.length >= 2) return "S "+trajectory[0][0]+" "+trajectory[0][1]+", "+trajectory[1][0]+" "+trajectory[1][1]+" "+smoothTraj(trajectory.slice(2),"",0);
+        }
+					
+	return "<path class=\""+firstrun+"\" d= \" M" +trajectory[0][0]+ " " +trajectory[0][1]+ " " + svgret + "\" stroke=\"" +color+ "\" fill=\"none\" style=\"stroke-width: 2px\"></path>";
+     };
+
+
+					
+    $("#pathGeneration").on("click", function() {
+        var pathsvg;
+	svghtml = pointsvg;				
+					
+	for (var i=0; i < devices.length; ++i) {
+	        var trajectory = devices[i];
+	        var color = colors[i];
+	        var num_traj = trajectory.length-1;
+
+	        
+                   svghtml += smoothTraj(trajectory,color,i+1); 
+               
+	}
+	pathsvg = svghtml;
+        $("svg").html(svghtml);
+	$("path").hover(function() {
+	   $("path").hide();
+			  $(this).show();
+			  $("tbody > tr").hide();
+			  console.log(".t"+$(this).attr("class"));
+			  $(".t"+ $(this).attr("class")).show();
+        }, function() {
+			  $("path").show();
+			  $("tr").show();
+	});
+	
+     });
+					
   </script>
   <!--script src="js/py.js"></script-->
 </html>
