@@ -9,7 +9,7 @@ app.set('view engine', 'ejs');
 app.use(express.static(__dirname));
 app.engine('ejs', require('ejs').renderFile);
 
-var size = 200;
+var size = 1400;
 var dataArr = [];
 var data1 = 'position1.txt';
 var data2 = 'newGTD.txt';

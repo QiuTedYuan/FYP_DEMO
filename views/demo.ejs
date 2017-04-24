@@ -33,14 +33,17 @@
    <div class="buttons">
       <div class="container">
 	<div class="row">
-	  <div class="col-md-4 text-center">
+	  <div class="col-md-3 text-center">
 	    <button type="button" class="btn btn-primary" id="deviceClass">Device Classification »</button>
 	  </div>
-	  <div class="col-md-4 text-center">
+	  <div class="col-md-3 text-center">
 	    <button type="button" class="btn btn-success disabled" id="pathGeneration">Path Generation »</button>
 	  </div>
-	  <div class="col-md-4 text-center">
+	  <div class="col-md-3 text-center">
 	    <button class="btn btn-warning" id="clear">Clear</button>
+	  </div>
+	  <div class="col-md-3 text-center">
+	    <button class="btn btn-danger" id="draw">Draw Charts</button>
 	  </div>
 	</div>
       </div>
@@ -73,6 +76,14 @@
 	</div>
       </div>
     </div>
+
+    <div class="container">
+      <canvas id="chartCanvas" width=1000px height=500px></canvas>
+    </div>
+    <div class="container">
+      <canvas id="chartCanvas2" width=1000px height=600px></canvas>
+    </div>
+
     <div id="spaceFiller" style="height:1000px;"></div>
   </body>
 
@@ -131,7 +142,7 @@
 			
 		var centerX = xx+rightshift;
 		var centerY = yy+upshift;
-		var radius = Math.round(1+fraction*9);
+	        var radius = Math.round(1+fraction*3);
 		svghtml += "<circle cx=\""+centerX+"\" cy=\""+centerY+"\" r=\""+radius+"\" stroke=\"black\" stroke-width=\"1\" fill=\"#"+color.toString(16)+"\" />";
 	}
     }
@@ -194,11 +205,11 @@
 		return result;
 	    }
 
-            var trajectory = [[defaultData[0].x-minX+rightshift,defaultData[0].y-minY+upshift]];
+            var trajectory = [[defaultData[0].x-minX+rightshift,defaultData[0].y-minY+upshift,defaultData[0].time]];
             for (var i=0; i< defaultData.length; ++i) {
 		var newid = defaultData[i].id;
 		if (newid==currid) {
-                    trajectory.push([defaultData[i].x-minX+rightshift, defaultData[i].y-minY+upshift]);
+                    trajectory.push([defaultData[i].x-minX+rightshift, defaultData[i].y-minY+upshift,defaultData[i].time]);
                 } else {
 		    devices.push(trajectory);
 		    var color = getRandomColor();
@@ -208,7 +219,7 @@
 			if (num_traj > 0) {
 				svghtml += printTrajectory(trajectory,devices.length,color);
 			} 
-	            trajectory = [[defaultData[i].x-minX+rightshift, defaultData[i].y-minY+upshift]];
+	            trajectory = [[defaultData[i].x-minX+rightshift, defaultData[i].y-minY+upshift,defaultData[i].time]];
 		    currid = newid;
                 }
             }
@@ -285,7 +296,6 @@
 	   $("path").hide();
 			  $(this).show();
 			  $("tbody > tr").hide();
-			  console.log(".t"+$(this).attr("class"));
 			  $(".t"+ $(this).attr("class")).show();
         }, function() {
 			  $("path").show();
@@ -293,7 +303,352 @@
 	});
 	
      });
-					
+
+     function drawChart(chartName, result, x, y) {
+          var sum = 0;
+          var sAngle = 0;
+          var context = document.getElementById('chartCanvas').getContext('2d');
+          context.textAlign = "center";
+          for (var i = 0; i < result.length; ++i) {
+            sum += result[i];
+          }
+          context.translate(x, y);
+          context.font = "20px Arial";
+          context.strokeStyle = "#000000";
+          context.fillStyle = "#000000";
+          context.fillText(chartName, 50, -85);
+          context.font = "5px Arial";
+          var colorArray = ["#aabbcc", "#bbccdd", "#ccddee", "#ddeeff"];
+          for (var i = 0; i < result.length; ++i) {
+            var percentage = result[i] / sum;
+
+            context.beginPath();
+
+            context.rotate(sAngle);
+            context.moveTo(0, 0);
+            context.lineTo(50, 0);
+            context.rotate(-sAngle);
+
+            context.arc(0, 0, 50, sAngle, sAngle + percentage * 2 * Math.PI, false);
+
+            sAngle += percentage * 2 * Math.PI;
+
+            context.rotate(sAngle);
+            context.moveTo(50, 0);
+            context.lineTo(0, 0);
+            context.rotate(-sAngle);
+
+            context.fillStyle = colorArray[i];
+
+            context.fill();
+
+            context.lineWidth = 1;
+            context.strokeStyle = "#666666";
+            context.stroke();
+          }
+
+          sAngle = 0;
+          for (var i = 0; i < result.length; ++i) {
+
+            var percentage = result[i] / sum;
+            sAngle += percentage * Math.PI;
+            context.beginPath();
+            var textInfo = result[i] + ", " + (percentage * 100).toFixed(1) + "%";
+            //var textInfo = i;
+            context.rotate(sAngle);
+            context.fillStyle = "#000000";
+            if (percentage > 0.25) {
+              //draw the text inside pie chart
+              context.translate(40, 0);
+              context.rotate(-sAngle);
+              context.fillText(textInfo, 0, 0);
+              context.rotate(sAngle);
+              context.translate(-40, 0);
+            } else {
+              //too small to draw the text inside pie chart.
+              context.translate(60, 0);
+              context.rotate(-sAngle);
+              context.fillText(textInfo, 0, 0);
+              context.rotate(sAngle);
+              context.translate(-60, 0);
+            }
+            context.rotate(-sAngle);
+
+            sAngle += percentage * Math.PI;
+          }
+
+          context.translate(100, 0);
+
+          var offset = result.length * 15 / 2;
+          context.font = "10px Arial";
+          context.textAlign = "start";
+          for (var i = 0; i < result.length; ++i) {
+            var percentage = result[i] / sum;
+            var textInfo = result[i] + ", " + (percentage * 100).toFixed(1) + "%";
+            context.beginPath();
+            context.fillStyle = colorArray[i];
+            context.fillRect(0, -offset + 15 * i, 10, 10);
+            context.fillStyle = "#000000";
+            context.fillText(textInfo, 15, -offset + 15 * i + 10);
+          }
+
+          context.translate(-100, 0);
+
+          context.translate(-x, -y);
+        }
+
+			  $("#draw").on("click",function() {
+          //The following code is used for generating number of points detected for each device
+          var recordsCount = [0, 0, 0, 0];
+          for (var i=0; i<devices.length; ++i) {
+            if (devices[i].length <= 2) {
+              ++recordsCount[0];
+            } else if (devices[i].length <= 5) {
+              ++recordsCount[1];
+            } else if (devices[i].length <= 10) {
+              ++recordsCount[2];
+            } else {
+              ++recordsCount[3];
+            }
+          };
+
+          drawChart("Number of points for each device", recordsCount, 150, 150);
+
+	function getInitTime(year, month, week, day, hour){
+	currentT = new Date().getTime();
+  currentT -= year*365*24*60*60*1000;
+  currentT -= month*30*24*60*60*1000;
+  currentT -= week*7*24*60*60*1000;
+  currentT -= day*24*60*60*1000;
+  currentT -= hour*60*60*1000;
+  return currentT;
+}
+
+	  var maxTime = 0;
+	  var minTime = devices[0][0][2];				    
+          var dwellCount = [0, 0, 0, 0];
+          for (var i=0; i<devices.length; ++i) {
+	    var dwellTime = devices[i][devices[i].length-1][2] - devices[i][0][2];
+	    if (devices[i][devices[i].length-1][2] > maxTime) maxTime=devices[i][devices[i].length-1][2];
+            if (devices[i][0][2]< minTime) minTime=devices[i][0][2];
+					  
+            if (dwellTime < 100) {
+              dwellCount[0] += 1;
+            } else if (dwellTime < 1000) {
+              dwellCount[1] += 1;
+            } else if (dwellTime < 10000) {
+              dwellCount[2] += 1;
+            } else {
+              dwellCount[3] += 1;
+            }
+          }
+	  drawChart("Dwell Time of Devices", dwellCount, 450, 150);
+				   var year = 0;
+var month = 0;
+var week = 0;
+var aweek = 7*24*60*60*1000;
+var day = 0;
+				   var aday = 24*60*60*1000;
+				   var ahour = 60*60*1000;
+				   var hour = 0;
+				   var amin = 60*1000;
+				   maxTime = parseInt(maxTime);
+				   minTime = parseInt(minTime);
+				   var timeDiff = maxTime-minTime;
+				   week = Math.floor(timeDiff/aweek);
+				   day = Math.floor(timeDiff/aday);
+				   hour = Math.ceil(timeDiff/ahour);
+			    
+//process
+var xCount = 0;
+var result = new Array();
+var initT = minTime;
+
+				   if (week) {
+  xCount = week*7;
+  for (var i=0; i<xCount; ++i){
+  	result[i]=0;
+  }
+  for (var j=0; j<devices.length; ++j) {
+    	var device = devices[j];
+        for (var k=0; k<device.length; ++k) {
+      	   var timeDiff = device[k][2]-initT;
+           if (timeDiff>=0 /* && timeDiff<aweek*/) {
+        	var pointWeek = Math.floor(timeDiff/aweek);
+                timeDiff = timeDiff-pointWeek*aweek;
+        	var pointDay = Math.floor(timeDiff/aday);
+                ++result[pointWeek*7+pointDay];
+           }
+        }
+  }
+} else if (day) {
+  xCount = day*24;
+	for (var i=0; i<xCount; ++i){
+  	result[i]=0;
+  }
+  for (var j=0; j<devices.length; ++j) {
+      var device = devices[j];
+      for (var k=0; k<device.length; ++k) {
+      	var timeDiff = device[k][2]-initT;
+        if (timeDiff>=0 /* && timeDiff<aweek*/) {
+        	var pointDay = Math.floor(timeDiff/aday);
+                timeDiff = timeDiff-pointDay*aday;
+        	var pointHour = Math.floor(timeDiff/ahour);
+                ++result[pointDay*24+pointHour];
+         }
+       }
+   }
+} else if (hour) {
+  xCount = hour*60;
+	for (var i=0; i<xCount; ++i){
+  	result[i]=0;
+  }
+  for (var j=0; j<devices.length; ++j) {
+      var device = devices[j];
+      for (var k=0; k<device.length; ++k) {
+      	var timeDiff = device[k][2]-initT;
+        if (timeDiff>=0 /* && timeDiff<aweek*/) {
+        	var pointHour = Math.floor(timeDiff/ahour);
+                timeDiff = timeDiff-pointHour*ahour;
+        	var pointMin = Math.floor(timeDiff/amin);
+                ++result[pointHour*60+pointMin];
+         }
+       }
+   }
+}
+
+function drawLineChart(result, initT, xCount, chartName, duration){
+	var maxResult = 0;
+  for (var i=0; i<xCount; ++i) {
+  	if (result[i]>maxResult) maxResult=result[i];
+  }
+	var width = 1000;
+  var height = 600;
+  var minX = 0.2*width;
+  var maxX = 0.9*width;
+  var lenX = maxX-minX;
+  var minY = 0.8*height;
+  var maxY = 0.2*height;
+  var lenY = minY-maxY;
+  var canvas = document.getElementById("chartCanvas2");
+	var ctx = canvas.getContext("2d");
+	ctx.font = "15px Arial";
+	ctx.textAlign="center";
+  var xInterval = lenX/xCount;
+  
+  ctx.strokeStyle = "#000000";
+  ctx.fillStyle = "#000000";
+  var initD = new Date(initT);
+  ctx.fillText(chartName+", starting from "+(initD.getHours()+1)+":"+(initD.getMinutes()+1)+" on "+initD.toDateString(),0.5*width,maxY-0.1*height);
+  
+  
+  ctx.font = "10px Arial";
+  //level 0
+  ctx.lineWidth=2;
+	ctx.moveTo(minX,minY);
+  ctx.lineTo(maxX,minY);
+  ctx.stroke();
+  ctx.fillText("0",0.15*width,minY);
+ 
+  var level = 4;
+  ctx.lineWidth=0.5;
+  for (var i=1; i<=level; ++i) {
+  	var frac=i/level;
+		ctx.moveTo(minX,minY-frac*lenY);
+  	ctx.lineTo(maxX,minY-frac*lenY);
+  	ctx.stroke();
+  	ctx.fillText(frac*maxResult,0.15*width,minY-frac*lenY);
+  }
+  
+ 	ctx.fillStyle = "#67A5F3";
+  ctx.lineWidth=3;
+  var prevX;
+  var prevY;
+  if (duration=="week" || duration=="month") {
+    for (var i=0; i<xCount; ++i) {
+      var time = new Date(initT+i*aday);
+      var currX=minX+xInterval*i;
+      var currY=minY-result[i]/maxResult*lenY;
+      if (xCount<=10 || i%5==0 || i==xCount-1) {
+      	 ctx.font = "10px Arial";
+         ctx.fillStyle = "#000000";
+         ctx.fillText(time.getDate()+'/'+(time.getMonth()+1),currX,minY+0.05*width);
+      }
+      ctx.beginPath();
+      ctx.strokeStyle = "#67A5F3";
+      ctx.arc(currX,currY,2,0,2*Math.PI);
+      ctx.stroke();
+      if (i==0) {
+        prevX=currX;
+        prevY=currY;
+      } else {
+          ctx.moveTo(prevX,prevY);
+          ctx.lineTo(currX,currY);
+          ctx.strokeStyle = "#67A5F3";
+          ctx.stroke();
+          prevX=currX;
+          prevY=currY;
+      }
+    }
+  } else if (duration=="year") {
+      for (var i=0; i<xCount; ++i) {
+      var time = new Date(initT+i*amonth);
+      var currX=minX+xInterval*i;
+      var currY=minY-result[i]/maxResult*lenY;
+      ctx.fillText(time.getMonth()+1,currX,minY+0.05*width);
+      ctx.beginPath();
+      ctx.strokeStyle = "#67A5F3";
+      ctx.arc(currX,currY,2,0,2*Math.PI);
+      ctx.stroke();
+      if (i==0) {
+        prevX=currX;
+        prevY=currY;
+      } else {
+          ctx.moveTo(prevX,prevY);
+          ctx.lineTo(currX,currY);
+          ctx.strokeStyle = "#67A5F3";
+          ctx.stroke();
+          prevX=currX;
+          prevY=currY;
+      }
+    }
+  } else if (duration=="hour") {
+      for (var i=0; i<xCount; ++i) {
+      var time = new Date(initT+i*amin);
+      var currX=minX+xInterval*i;
+      var currY=minY-result[i]/maxResult*lenY;
+      if (xCount<=10 || i%5==0 || i==xCount-1) {
+      	 ctx.font = "10px Arial";
+     ctx.fillStyle = "#000000";
+         ctx.fillText(time.getMinutes()+1,currX,minY+0.05*width);
+      }
+
+      console.log(initT+i*amin);
+      ctx.beginPath();
+      ctx.strokeStyle = "#67A5F3";
+      ctx.arc(currX,currY,2,0,2*Math.PI);
+      ctx.stroke();
+      if (i==0) {
+        prevX=currX;
+        prevY=currY;
+      } else {
+          ctx.moveTo(prevX,prevY);
+          ctx.lineTo(currX,currY);
+          ctx.strokeStyle = "#67A5F3";
+          ctx.stroke();
+          prevX=currX;
+          prevY=currY;
+      }
+    }
+  }
+  
+}
+
+//call draw function
+
+drawLineChart(result, initT, xCount,"Number of devices detected in "+hour+" hour(s)", "hour");
+
+      });					
   </script>
   <!--script src="js/py.js"></script-->
 </html>
