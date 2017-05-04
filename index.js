@@ -9,11 +9,12 @@ app.set('view engine', 'ejs');
 app.use(express.static(__dirname));
 app.engine('ejs', require('ejs').renderFile);
 
-var size = 1400;
+var size = 200;
 var dataArr = [];
 var data1 = 'position1.txt';
 var data2 = 'newGTD.txt';
 var data3 = 'position2.txt';
+var data = 'path1.txt';
 dataArr = fs.readFileSync(__dirname+'/data/'+data2,'utf8').toString().split('\n',size);
 
 var deviceData = []
